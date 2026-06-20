@@ -709,3 +709,52 @@ body {
   transition: all 0.2s;
 }
 .btn-download:hover { border-color: var(--accent); color: var(--text); }
+
+/* ─── PREMIUM FUSION UI ─── */
+.premium-fusion-card {
+  background: linear-gradient(145deg, rgba(245,158,11,0.05) 0%, rgba(245,158,11,0.15) 100%);
+  border: 1px solid rgba(245,158,11,0.4);
+  box-shadow: 0 0 30px rgba(245,158,11,0.15), inset 0 0 20px rgba(245,158,11,0.05);
+  border-radius: var(--radius);
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+  animation: pulseGlow 3s infinite alternate;
+}
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 30px rgba(245,158,11,0.15); }
+  100% { box-shadow: 0 0 45px rgba(245,158,11,0.25); }
+}
+.premium-fusion-card::before {
+  content: '';
+  position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: shimmer 4s infinite linear;
+}
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+.premium-details {
+  margin-top: 24px;
+  cursor: pointer;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  transition: all 0.3s ease;
+}
+.premium-details:hover {
+  border-color: var(--border2);
+  background: rgba(255,255,255,0.03);
+}
+.premium-details summary {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text2);
+  outline: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.premium-details summary:hover { color: var(--text); }

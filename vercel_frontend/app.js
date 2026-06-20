@@ -386,19 +386,19 @@ function renderFusionResult(d) {
     <div class="fusion-result-grid" style="margin-top:28px;">
       <div style="grid-column:1/-1; font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Final Fused Output (Optimized)</div>
 
-      <div class="fusion-card winner" style="grid-column:1/-1; transform:none;">
-        <div class="fusion-card-label">Fusion Strategy B · Best AUROC</div>
-        <div class="fusion-card-name">F2-Weighted Average</div>
-        <div class="fusion-card-prob ${riskCls(d.fusion_b_f2_weighted)}">${pctLabel(d.fusion_b_f2_weighted)}</div>
-        <div class="fusion-winner-tag">★ Final Decision (Highest Recall/F2)</div>
+      <div class="premium-fusion-card winner" style="grid-column:1/-1;">
+        <div class="fusion-card-label" style="color:var(--gold);">Fusion Strategy B · Best AUROC</div>
+        <div class="fusion-card-name" style="color:white; font-size:16px;">F2-Weighted Average</div>
+        <div class="fusion-card-prob ${riskCls(d.fusion_b_f2_weighted)}" style="font-size:42px;">${pctLabel(d.fusion_b_f2_weighted)}</div>
+        <div class="fusion-winner-tag" style="background:var(--gold); color:black;">★ Final Decision (Highest Recall/F2)</div>
       </div>
     </div>
 
-    <details style="margin-top:16px; cursor:pointer; color:var(--text3); font-size:13px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; background:var(--bg2);">
-      <summary style="font-weight:600; outline:none; display:flex; justify-content:space-between; align-items:center;">
+    <details class="premium-details">
+      <summary>
         View Other Fusion Strategies <span>▼</span>
       </summary>
-      <div class="fusion-result-grid" style="margin-top:16px;">
+      <div class="fusion-result-grid" style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
         <div class="fusion-card" style="box-shadow:none; border:1px solid var(--border);">
           <div class="fusion-card-label">Fusion A</div>
           <div class="fusion-card-name">Simple Average</div>
