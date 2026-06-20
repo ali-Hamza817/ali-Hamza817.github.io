@@ -47,7 +47,21 @@ Instead of relying on a single modality, RCC·AI trains independent, highly spec
 
 ---
 
-## 🗄️ 5. Datasets & Provenance
+## 🔄 5. Transfer Learning & Its Proven Benefit
+
+A major biological and data science hurdle in oncology is that population-scale registries (like SEER) have massive patient numbers but no molecular data, while molecular databases (like TCGA) are incredibly rich but have tiny sample sizes. Training a multimodal model from scratch on 126 patients would instantly overfit.
+
+**How we solved it via Domain Transfer:**
+1. **Pre-training:** Model 1 (Clinical) is trained on 36,738 SEER patients, learning incredibly robust, population-level patterns about how Age, Tumour Size, T-Stage, and Grade relate to metastasis.
+2. **Feature Harmonization:** The clinical metadata from the TCGA patients is mathematically mapped to match the input format expected by the SEER model.
+3. **Zero-Shot Inference (The Transfer):** We take the pre-trained SEER model and run it directly on the 126 TCGA patients **without retraining or fine-tuning**. 
+
+**The Benefit:** 
+By transferring the SEER model to TCGA, we effectively inject the statistical weight and confidence of 36,000+ patients into a tiny 126-patient multimodal cohort. This proves that we do not need a single, massive dataset containing all three modalities (which is exceedingly rare); instead, we can train highly specialized models on disjointed datasets and mathematically fuse them via transfer learning.
+
+---
+
+## 🗄️ 6. Datasets & Provenance
 
 To achieve multimodal fusion without compromising statistical power, data was sourced from two premier international oncology databases.
 
@@ -64,7 +78,7 @@ To achieve multimodal fusion without compromising statistical power, data was so
 
 ---
 
-## ⚙️ 6. Technical Implementation Details
+## ⚙️ 7. Technical Implementation Details
 
 Algorithms were specifically selected to match the structure, dimensionality, and noise profile of their respective modalities.
 
@@ -90,7 +104,7 @@ Four fusion strategies were mathematically applied to the probability outputs ($
 
 ---
 
-## 📊 7. Final Results
+## 📊 8. Final Results
 
 All metrics below are sourced directly from empirical Out-Of-Fold and Holdout testing. 
 
@@ -117,7 +131,7 @@ All metrics below are sourced directly from empirical Out-Of-Fold and Holdout te
 
 ---
 
-## ⚠️ 8. Scientific Limitations
+## ⚠️ 9. Scientific Limitations
 
 1. **Alignment Cohort Selection Bias:** The 126-patient inner join is not a natural dataset. Patients with incomplete multimodal data (e.g., failed imaging segmentation, missing RNA-Seq) were excluded, which may introduce spectrum bias.
 2. **Small Positive Class in Fusion:** Only 18 of the 126 patients had true metastasis (M1). All fusion metrics possess wide confidence intervals due to this severe class imbalance.
@@ -125,7 +139,7 @@ All metrics below are sourced directly from empirical Out-Of-Fold and Holdout te
 
 ---
 
-## 🚀 9. Running the Application
+## 🚀 10. Running the Application
 
 This repository includes a full-stack web application designed for clinician interaction.
 
