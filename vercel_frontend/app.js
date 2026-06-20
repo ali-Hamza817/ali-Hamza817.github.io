@@ -1,5 +1,22 @@
 const API_BASE_URL = "/api";
 
+/* ── Theme Toggle ── */
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  document.getElementById('theme-toggle').innerText = newTheme === 'light' ? '🌙' : '☀️';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    const toggleBtn = document.getElementById('theme-toggle');
+    if (toggleBtn) toggleBtn.innerText = '🌙';
+  }
+});
 /* ── Tab switching ── */
 function switchTab(tab, e) {
   if (e) e.preventDefault();
