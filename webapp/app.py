@@ -2,12 +2,15 @@ import sys, os, io, tempfile, traceback
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask_cors import CORS
 import numpy as np
 import pandas as pd
 import joblib
 import xgboost as xgb
 
 app = Flask(__name__)
+# Enable Cross-Origin Resource Sharing so Vercel can talk to this cluster
+CORS(app)
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB (for NIfTI files)
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

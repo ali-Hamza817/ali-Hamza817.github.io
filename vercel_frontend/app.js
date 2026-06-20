@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://<YOUR_CLUSTER_PUBLIC_IP>:5050";
+const API_BASE_URL = "http://203.124.40.57:5050";
 
 /* ── Tab switching ── */
 function switchTab(tab, e) {
