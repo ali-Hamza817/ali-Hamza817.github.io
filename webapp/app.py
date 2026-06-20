@@ -29,6 +29,12 @@ def f2_weighted_loss(y_true, y_pred):
 # ─────────────────────────────────────────
 # Load all models once at startup
 # ─────────────────────────────────────────
+# Fix for gunicorn pickling issue
+import __main__
+def f2_weighted_loss(*args, **kwargs):
+    pass
+__main__.f2_weighted_loss = f2_weighted_loss
+
 print("Loading models…")
 M1_FEATURES = ['age', 'sex', 't_stage', 'n_stage', 'tumor_size_cm',
                 'grade', 'histology_enc', 'prior_tx', 'year_diagnosis']

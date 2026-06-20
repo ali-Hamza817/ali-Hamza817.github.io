@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://203.124.40.57:5050/:path*"
+      "destination": "https://editing-lions-powers-thou.trycloudflare.com/:path*"
     }
   ]
 }
