@@ -384,27 +384,33 @@ function renderFusionResult(d) {
     </div>
 
     <div class="fusion-result-grid" style="margin-top:28px;">
-      <div style="grid-column:1/-1; font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Fusion Strategy Outputs</div>
+      <div style="grid-column:1/-1; font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Final Fused Output (Optimized)</div>
 
-      <div class="fusion-card">
-        <div class="fusion-card-label">Fusion A</div>
-        <div class="fusion-card-name">Simple Average</div>
-        <div class="fusion-card-prob ${riskCls(d.fusion_a_simple_avg)}">${pctLabel(d.fusion_a_simple_avg)}</div>
-      </div>
-
-      <div class="fusion-card winner">
-        <div class="fusion-card-label">Fusion B · Best AUROC</div>
+      <div class="fusion-card winner" style="grid-column:1/-1; transform:none;">
+        <div class="fusion-card-label">Fusion Strategy B · Best AUROC</div>
         <div class="fusion-card-name">F2-Weighted Average</div>
         <div class="fusion-card-prob ${riskCls(d.fusion_b_f2_weighted)}">${pctLabel(d.fusion_b_f2_weighted)}</div>
-        <div class="fusion-winner-tag">★ Final Decision</div>
-      </div>
-
-      <div class="fusion-card">
-        <div class="fusion-card-label">Fusion D</div>
-        <div class="fusion-card-name">Cascade Max Pooling</div>
-        <div class="fusion-card-prob ${riskCls(d.fusion_d_cascade_max)}">${pctLabel(d.fusion_d_cascade_max)}</div>
+        <div class="fusion-winner-tag">★ Final Decision (Highest Recall/F2)</div>
       </div>
     </div>
+
+    <details style="margin-top:16px; cursor:pointer; color:var(--text3); font-size:13px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; background:var(--bg2);">
+      <summary style="font-weight:600; outline:none; display:flex; justify-content:space-between; align-items:center;">
+        View Other Fusion Strategies <span>▼</span>
+      </summary>
+      <div class="fusion-result-grid" style="margin-top:16px;">
+        <div class="fusion-card" style="box-shadow:none; border:1px solid var(--border);">
+          <div class="fusion-card-label">Fusion A</div>
+          <div class="fusion-card-name">Simple Average</div>
+          <div class="fusion-card-prob ${riskCls(d.fusion_a_simple_avg)}">${pctLabel(d.fusion_a_simple_avg)}</div>
+        </div>
+        <div class="fusion-card" style="box-shadow:none; border:1px solid var(--border);">
+          <div class="fusion-card-label">Fusion D</div>
+          <div class="fusion-card-name">Cascade Max Pooling</div>
+          <div class="fusion-card-prob ${riskCls(d.fusion_d_cascade_max)}">${pctLabel(d.fusion_d_cascade_max)}</div>
+        </div>
+      </div>
+    </details>
 
     <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border);">
       <h4 style="font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Site-Specific Risks (Clinical Modality)</h4>
