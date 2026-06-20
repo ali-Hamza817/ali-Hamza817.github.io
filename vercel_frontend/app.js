@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://203.124.40.57:5050";
+const API_BASE_URL = "/api";
 
 /* ── Tab switching ── */
 function switchTab(tab, e) {
