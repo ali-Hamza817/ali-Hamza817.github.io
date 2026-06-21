@@ -1560,13 +1560,13 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module">
-  import { Niivue } from "https://niivue.github.io/niivue/features/niivue.es.js";
+  import { Niivue } from "https://unpkg.com/@niivue/niivue@0.44.1/dist/niivue.es.js";
   window.nv = new Niivue({ backColor: [0, 0, 0, 1] });
   window.nv.attachTo("gl");
   
-  // Load a sample MNI152 brain CT by default for demo purposes
+  // Load a sample synthetic CT by default for demo purposes
   window.nv.loadVolumes([{
-    url: "https://niivue.github.io/niivue/images/mni152.nii.gz",
+    url: "Sample_Scan.nii.gz",
     name: "Sample_Scan.nii.gz"
   }]);
   

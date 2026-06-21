@@ -16,18 +16,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleBtn = document.getElementById('theme-toggle');
     if (toggleBtn) toggleBtn.innerText = '🌙';
   }
+  
+  // Restore active tab
+  const savedTab = localStorage.getItem('activeTab');
+  if (savedTab) {
+    switchTab(savedTab);
+  }
 });
 /* ── Tab switching ── */
 function switchTab(tab, e) {
   if (e) e.preventDefault();
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.remove('hidden');
+  
+  const targetTab = document.getElementById('tab-' + tab);
+  if (targetTab) {
+    targetTab.classList.remove('hidden');
+  }
+  
   if (e && e.currentTarget) e.currentTarget.classList.add('active');
   // Also highlight by tab name match
   document.querySelectorAll('.pill').forEach(p => {
     if (p.getAttribute('data-tab') === tab) p.classList.add('active');
   });
+  
+  // Save active tab
+  localStorage.setItem('activeTab', tab);
 }
 
 function activeFusionTab(id, e) {
