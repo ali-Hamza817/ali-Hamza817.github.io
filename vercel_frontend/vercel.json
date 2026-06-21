@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://editing-lions-powers-thou.trycloudflare.com/:path*"
+      "destination": "https://surge-feeds-purchased-block.trycloudflare.com/:path*"
     }
   ]
 }
