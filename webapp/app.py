@@ -398,14 +398,21 @@ def upload_radiomics_auto_segment():
         mask_path_l = os.path.join(tmp_dir, 'kidney_left.nii.gz')
         mask_path_r = os.path.join(tmp_dir, 'kidney_right.nii.gz')
         
-        mask_path = None
-        if os.path.exists(mask_path_l) and os.path.getsize(mask_path_l) > 1000:
-            mask_path = mask_path_l
-        elif os.path.exists(mask_path_r) and os.path.getsize(mask_path_r) > 1000:
-            mask_path = mask_path_r
+        import SimpleITK as sitk
+        def get_mask_volume(p):
+            if not os.path.exists(p): return 0
+            try:
+                return sitk.GetArrayFromImage(sitk.ReadImage(p)).sum()
+            except:
+                return 0
+                
+        vol_l = get_mask_volume(mask_path_l)
+        vol_r = get_mask_volume(mask_path_r)
 
-        if not mask_path:
+        if vol_l == 0 and vol_r == 0:
             return jsonify({"error": "Auto-segmentation completed, but no kidney was found in this scan."}), 400
+            
+        mask_path = mask_path_l if vol_l > vol_r else mask_path_r
 
         # 2. Run PyRadiomics
         from radiomics import featureextractor
