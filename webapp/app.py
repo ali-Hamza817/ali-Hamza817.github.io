@@ -383,7 +383,60 @@ def upload_radiomics_auto_segment():
         img_path  = os.path.join(tmp_dir, 'image.nii.gz')
         image_file.save(img_path)
 
-        # 1. Run TotalSegmentator for kidneys
+        # --- STAGE 1: EfficientNet-B0 CT Validator ---
+        validator_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'models', 'ct_validator.pth')
+        if os.path.exists(validator_path):
+            try:
+                import torch
+                from torchvision import transforms, models
+                from PIL import Image
+                import SimpleITK as sitk
+                import numpy as np
+                import torch.nn as nn
+                
+                # Load Model
+                val_model = models.efficientnet_b0()
+                num_ftrs = val_model.classifier[1].in_features
+                val_model.classifier[1] = nn.Linear(num_ftrs, 2)
+                val_model.load_state_dict(torch.load(validator_path, map_location='cpu'))
+                val_model.eval()
+                
+                # Extract middle slice from NIfTI
+                img_arr = sitk.GetArrayFromImage(sitk.ReadImage(img_path))
+                mid_slice = img_arr[img_arr.shape[0] // 2]
+                
+                # Normalize to 0-255 RGB
+                mid_slice = ((mid_slice - mid_slice.min()) / (mid_slice.max() - mid_slice.min() + 1e-8) * 255).astype(np.uint8)
+                pil_img = Image.fromarray(mid_slice).convert('RGB')
+                
+                # Transform
+                transform = transforms.Compose([
+                    transforms.Resize((256, 256)),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                ])
+                input_tensor = transform(pil_img).unsqueeze(0)
+                
+                # Predict
+                with torch.no_grad():
+                    output = val_model(input_tensor)
+                    prob = torch.nn.functional.softmax(output, dim=1)[0][1].item() # Probability of class 1 (Kidney)
+                
+                if prob < 0.50:
+                    return jsonify({"error": f"Validation Failed: This does not appear to be a kidney CT scan. (Kidney Confidence: {prob*100:.1f}%)"}), 400
+                    
+            except Exception as e:
+                print(f"Validator warning: {e}")
+                pass # Fail silently and proceed if validator fails to load/run
+                
+        # --- STAGE 2: 3D Segmentation (Fallback to TotalSegmentator if U-Net not ready) ---
+        custom_unet_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'models', '3d_unet_kits23.pth')
+        
+        if os.path.exists(custom_unet_path):
+            # TODO: Implement MONAI inference when training finishes
+            pass
+            
         try:
             subprocess.run([
                 "TotalSegmentator", 

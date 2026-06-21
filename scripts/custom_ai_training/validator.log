@@ -1,0 +1,23 @@
+nohup: ignoring input
+Using device: cuda
+Loaded 12446 positive and 0 negative samples.
+WARNING: You have 0 negative examples! Please add non-kidney images to: ../../datasets/dataset_4_kaggle_validator/Negative-Examples
+Downloading: "https://download.pytorch.org/models/efficientnet_b0_rwightman-7f5810bc.pth" to /home/administrator/.cache/torch/hub/checkpoints/efficientnet_b0_rwightman-7f5810bc.pth
+  0%|          | 0.00/20.5M [00:00<?, ?B/s]  1%|          | 128k/20.5M [00:00<00:23, 910kB/s]  1%|          | 256k/20.5M [00:00<00:20, 1.04MB/s]  2%|▏         | 512k/20.5M [00:00<00:12, 1.61MB/s]  4%|▍         | 896k/20.5M [00:00<00:08, 2.39MB/s]  8%|▊         | 1.62M/20.5M [00:00<00:04, 4.20MB/s] 14%|█▍        | 2.88M/20.5M [00:00<00:02, 7.05MB/s] 25%|██▌       | 5.12M/20.5M [00:00<00:01, 12.1MB/s] 45%|████▍     | 9.12M/20.5M [00:00<00:00, 21.1MB/s] 64%|██████▍   | 13.1M/20.5M [00:00<00:00, 27.2MB/s] 84%|████████▎ | 17.1M/20.5M [00:01<00:00, 31.6MB/s]100%|██████████| 20.5M/20.5M [00:01<00:00, 18.5MB/s]
+Starting Training Loop...
+Epoch [1/15] Loss: 0.0355 | Train Acc: 99.43% | Val Acc: 100.00%
+  -> Saved new best model to ../../models/ct_validator.pth
+Epoch [2/15] Loss: 0.0007 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [3/15] Loss: 0.0003 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [4/15] Loss: 0.0002 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [5/15] Loss: 0.0001 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [6/15] Loss: 0.0001 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [7/15] Loss: 0.0001 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [8/15] Loss: 0.0001 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [9/15] Loss: 0.0000 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [10/15] Loss: 0.0000 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [11/15] Loss: 0.0000 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [12/15] Loss: 0.0000 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [13/15] Loss: 0.0000 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [14/15] Loss: 0.0000 | Train Acc: 100.00% | Val Acc: 100.00%
+Epoch [15/15] Loss: 0.0000 | Train Acc: 100.00% | Val Acc: 100.00%

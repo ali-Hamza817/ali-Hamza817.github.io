@@ -1,0 +1,4 @@
+nohup: ignoring input
+Using device: cuda
+Found 0 valid KiTS23 cases.
+No data found! Please run the 01_setup_datasets.sh script to download KiTS23 first.

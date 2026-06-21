@@ -406,7 +406,7 @@ async function uploadCTForAutoSegment() {
   const formData = new FormData();
   formData.append('image', file);
 
-  statusDiv.innerHTML = `<span style="color:var(--gold);">⏳ Uploading CT and running TotalSegmentator AI... This may take a few minutes depending on server load. Please wait...</span>`;
+  statusDiv.innerHTML = `<span style="color:var(--gold);">⏳ Running Stage 1 (Validator) and Stage 2 (Segmenter)... This may take a few minutes. Please wait...</span>`;
   showLoading();
 
   try {

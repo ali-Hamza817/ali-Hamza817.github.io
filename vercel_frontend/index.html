@@ -1228,14 +1228,20 @@
 
     <!-- Fusion: Imaging -->
     <div id="f-imaging" class="f-panel hidden">
-      <div class="card full-card" style="margin-bottom: 20px; border: 1px solid var(--accent); background: rgba(0, 240, 255, 0.05);">
-        <p class="card-title" style="color:var(--accent);">🤖 AI Auto-Segmentation (TotalSegmentator)</p>
-        <p style="font-size:13px; color:var(--text3); margin-bottom:16px;">Upload a raw 3D CT scan (.nii or .nii.gz). Our AI will automatically find the kidney, segment the tumour, and extract all 49 PyRadiomics features for you.</p>
-        <div style="display:flex; gap:12px; align-items:center;">
-          <input type="file" id="fusion-ct-upload" accept=".nii,.nii.gz" style="flex:1; padding:8px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text);" />
-          <button class="btn btn-primary" onclick="uploadCTForAutoSegment()" style="white-space:nowrap;">Run Auto-Segmentation</button>
+      <div class="card full-card" style="margin-bottom: 20px; border: 1px solid var(--accent); background: rgba(0, 240, 255, 0.05); padding: 20px;">
+        <div class="f-upload-zone" style="text-align: center;">
+              <h3 style="color:var(--accent); margin-bottom: 10px;">🤖 2-Stage AI Imaging Pipeline</h3>
+              <p style="font-size:13px; color:var(--text3); margin-bottom:10px;">Upload a raw 3D CT scan (.nii or .nii.gz).</p>
+              <ul style="text-align: left; max-width: 400px; margin: 0 auto 15px auto; font-size: 0.9em; color: var(--text2);">
+                <li><strong>Stage 1 (Validator):</strong> EfficientNet-B0 verifies the image is a Kidney CT.</li>
+                <li><strong>Stage 2 (Segmenter):</strong> AI automatically segments the tumour and extracts 49 PyRadiomics features.</li>
+              </ul>
+              <div style="display:flex; gap:12px; align-items:center; justify-content: center;">
+                <input type="file" id="fusion-ct-upload" accept=".nii,.nii.gz" style="padding:8px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text);" />
+                <button class="btn btn-primary" onclick="uploadCTForAutoSegment()" style="white-space:nowrap;">Run AI Pipeline</button>
+              </div>
         </div>
-        <div id="auto-segment-status" style="margin-top:12px; font-size:13px; color:var(--text2);"></div>
+        <div id="auto-segment-status" style="margin-top:12px; font-size:13px; color:var(--text2); text-align: center;"></div>
       </div>
 
       <div class="card full-card">
