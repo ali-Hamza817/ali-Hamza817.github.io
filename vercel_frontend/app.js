@@ -360,28 +360,37 @@ function renderImagingResult(d) {
    3-MODALITY FUSION
 ══════════════════════════════════════ */
 function fillFusionDemo() {
-  // Clinical: RCC-SEER-00004 (real patient, metastasis=1, bone_met=1)
-  document.getElementById('fc_age').value        = 62;
-  document.getElementById('fc_sex').value        = 1;
-  document.getElementById('fc_t_stage').value    = 0;
-  document.getElementById('fc_n_stage').value    = 0;
-  document.getElementById('fc_tumor_size').value = 3.5;
-  document.getElementById('fc_grade').value      = 0;
-  document.getElementById('fc_histology').value  = 3;
-  document.getElementById('fc_prior_tx').value   = 0;
-  document.getElementById('fc_year').value       = 2012;
+  const activePanel = document.querySelector('.f-panel:not(.hidden)');
+  if (!activePanel) {
+    alert("Please open a tab to load its demo data.");
+    return;
+  }
 
-  // Genomic
-  Object.entries(GENOMIC_DEMO).forEach(([gene, val]) => {
-    const el = document.getElementById('fg_' + gene);
-    if (el) el.value = val;
-  });
+  const panelId = activePanel.id;
 
-  // Imaging
-  Object.entries(IMAGING_DEMO).forEach(([feat, val]) => {
-    const el = document.getElementById('fr_' + feat);
-    if (el) el.value = val;
-  });
+  if (panelId === 'f-clinical') {
+    document.getElementById('fc_age').value        = 62;
+    document.getElementById('fc_sex').value        = 1;
+    document.getElementById('fc_t_stage').value    = 0;
+    document.getElementById('fc_n_stage').value    = 0;
+    document.getElementById('fc_tumor_size').value = 3.5;
+    document.getElementById('fc_grade').value      = 0;
+    document.getElementById('fc_histology').value  = 3;
+    document.getElementById('fc_prior_tx').value   = 0;
+    document.getElementById('fc_year').value       = 2012;
+  }
+  else if (panelId === 'f-genomic') {
+    Object.entries(GENOMIC_DEMO).forEach(([gene, val]) => {
+      const el = document.getElementById('fg_' + gene);
+      if (el) el.value = val;
+    });
+  }
+  else if (panelId === 'f-imaging') {
+    Object.entries(IMAGING_DEMO).forEach(([feat, val]) => {
+      const el = document.getElementById('fr_' + feat);
+      if (el) el.value = val;
+    });
+  }
 }
 
 async function uploadCTForAutoSegment() {
