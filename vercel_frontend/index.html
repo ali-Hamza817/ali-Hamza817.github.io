@@ -935,6 +935,9 @@
 
     <!-- Fusion: Clinical -->
     <div id="f-clinical" class="f-panel">
+      <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+        <button class="btn-demo" style="border:1px solid var(--text3); color:var(--text2); padding:6px 12px; font-size:12px; background:transparent;" onclick="clearPanelInputs('f-clinical')">🧹 Clear Clinical Inputs</button>
+      </div>
       <div class="card-grid">
         <div class="card">
           <h3 class="card-title">Patient Demographics</h3>
@@ -960,7 +963,10 @@
     <!-- Fusion: Genomic -->
     <div id="f-genomic" class="f-panel hidden">
       <div class="card full-card">
-        <p class="card-title">Gene Expression (54 ANOVA-Selected Genes) — use Demo to auto-fill</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 class="card-title" style="margin:0;">Gene Expression Log2(FPKM+1)</h3>
+          <button class="btn-demo" style="border:1px solid var(--text3); color:var(--text2); padding:6px 12px; font-size:12px; background:transparent;" onclick="clearPanelInputs('f-genomic')">🧹 Clear Genomic Inputs</button>
+        </div>
         <div id="fusion-gene-inputs" class="gene-grid">
           
           <div class="gene-item">
@@ -1239,6 +1245,9 @@
 
     <!-- Fusion: Imaging -->
     <div id="f-imaging" class="f-panel hidden">
+      <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+        <button class="btn-demo" style="border:1px solid var(--text3); color:var(--text2); padding:6px 12px; font-size:12px; background:transparent;" onclick="clearPanelInputs('f-imaging')">🧹 Clear Imaging Inputs</button>
+      </div>
       <div class="card full-card" style="margin-bottom: 20px; border: 1px solid var(--accent); background: rgba(0, 240, 255, 0.05); padding: 20px;">
         <div class="imaging-split-layout">
           <!-- Left side: Upload -->

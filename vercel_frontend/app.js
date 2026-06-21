@@ -461,6 +461,21 @@ function clearFusionResults() {
   }
 }
 
+function clearPanelInputs(panelId) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  
+  // Clear all number inputs
+  panel.querySelectorAll('input[type="number"]').forEach(input => {
+    input.value = 0;
+  });
+  
+  // Reset all selects to their first option
+  panel.querySelectorAll('select').forEach(select => {
+    select.selectedIndex = 0;
+  });
+}
+
 async function runFusion() {
   const useClin = document.getElementById('enable_clinical').checked;
   const useGeno = document.getElementById('enable_genomic').checked;
