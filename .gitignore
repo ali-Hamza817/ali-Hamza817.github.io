@@ -26,3 +26,5 @@ Thumbs.db
 # Scraped HTML containing public keys
 base_papers/
 cloudflared-linux-amd64
+test_*.py
+validation_cases/

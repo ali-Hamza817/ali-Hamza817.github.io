@@ -310,6 +310,16 @@ def upload_radiomics_nifti():
         image_file.save(img_path)
         mask_file.save(mask_path)
 
+        # Fix ITK orthonormal direction cosines error
+        try:
+            import nibabel as nib
+            img_nib = nib.load(img_path)
+            mask_nib = nib.load(mask_path)
+            fixed_mask = nib.Nifti1Image(mask_nib.get_fdata(), img_nib.affine, img_nib.header)
+            nib.save(fixed_mask, mask_path)
+        except Exception as e:
+            print(f"Warning: Failed to fix orthonormal matrix: {e}")
+
         # Run PyRadiomics
         from radiomics import featureextractor
         params = {
@@ -452,7 +462,19 @@ def upload_radiomics_auto_segment():
 
         mask_path_l = os.path.join(tmp_dir, 'kidney_left.nii.gz')
         mask_path_r = os.path.join(tmp_dir, 'kidney_right.nii.gz')
-        
+
+        # Fix ITK orthonormal direction cosines error
+        try:
+            import nibabel as nib
+            img_nib = nib.load(img_path)
+            for m_path in [mask_path_l, mask_path_r]:
+                if os.path.exists(m_path):
+                    mask_nib = nib.load(m_path)
+                    fixed_mask = nib.Nifti1Image(mask_nib.get_fdata(), img_nib.affine, img_nib.header)
+                    nib.save(fixed_mask, m_path)
+        except Exception as e:
+            print(f"Warning: Failed to fix orthonormal matrix in auto-seg: {e}")
+
         import SimpleITK as sitk
         def get_mask_volume(p):
             if not os.path.exists(p): return 0
@@ -499,6 +521,11 @@ def upload_radiomics_auto_segment():
                 except:
                     pass
 
+        # Base64 encode the mask to return to the frontend
+        import base64
+        with open(mask_path, "rb") as mf:
+            mask_b64 = base64.b64encode(mf.read()).decode('utf-8')
+
         # Cleanup temp files
         import shutil
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -516,6 +543,7 @@ def upload_radiomics_auto_segment():
             "features_used":      len(found),
             "missing_features":   missing[:10],
             "feature_values":     {feat: round(v,6) for feat, v in data.items()},
+            "mask_base64":        mask_b64,
             "note":               f"TotalSegmentator successfully auto-segmented tumour. PyRadiomics extracted {len(feat_vals)} features. {len(found)}/{len(M3_FEATURES)} required features found."
         })
     except Exception as e:

@@ -747,27 +747,64 @@ function renderGenomicFileResult(d) {
 }
 
 /* ══════════════════════════════════════
-   IMAGING — NIFTI UPLOAD
+   IMAGING — 1-CLICK AUTO-SEGMENTATION
 ══════════════════════════════════════ */
-async function runImagingNifti() {
-  const ctInput   = document.getElementById('ct-file-input');
-  const maskInput = document.getElementById('mask-file-input');
+async function runImagingAutoSegment() {
+  const ctInput = document.getElementById('ct-file-input');
   if (!ctInput.files || !ctInput.files[0]) { alert('Please upload a CT scan NIfTI file.'); return; }
-  if (!maskInput.files || !maskInput.files[0]) { alert('Please upload a tumour mask NIfTI file.'); return; }
 
   const formData = new FormData();
   formData.append('image', ctInput.files[0]);
-  formData.append('mask',  maskInput.files[0]);
 
   showLoading();
-  document.querySelector('#loading p').textContent = 'Running PyRadiomics feature extraction… (10–60s)';
+  document.querySelector('#loading p').textContent = '🤖 AI Auto-Segmenting Tumor (TotalSegmentator)... This takes 2-3 minutes.';
+  
   try {
-    const res  = await fetch(API_BASE_URL + '/upload/radiomics/nifti', { method: 'POST', body: formData });
+    const res  = await fetch(API_BASE_URL + '/upload/radiomics/auto-segment', { method: 'POST', body: formData });
     const data = await res.json();
     hideLoading();
     document.querySelector('#loading p').textContent = 'Running AI inference…';
+    
     if (data.error) throw new Error(data.error);
-    renderImagingFileResult(data, 'CT Scan + PyRadiomics', data.note);
+
+    // Auto-fill manual inputs so Fusion works
+    if (data.feature_values) {
+      for (const [feat, val] of Object.entries(data.feature_values)) {
+        const input = document.getElementById('fr_' + feat);
+        if (input) input.value = val;
+      }
+    }
+
+    renderImagingFileResult(data, 'AI Auto-Segment + PyRadiomics', data.note, true);
+
+    // Load CT and AI Mask into Niivue 3D Workstation
+    if (window.nv && data.mask_base64) {
+       // Clear old volumes
+       window.nv.volumes = [];
+       // 1. Add original CT scan
+       await window.nv.loadFromFile(ctInput.files[0]);
+       
+       // 2. Decode base64 AI Mask
+       const byteCharacters = atob(data.mask_base64);
+       const byteNumbers = new Array(byteCharacters.length);
+       for (let i = 0; i < byteCharacters.length; i++) {
+           byteNumbers[i] = byteCharacters.charCodeAt(i);
+       }
+       const byteArray = new Uint8Array(byteNumbers);
+       const blob = new Blob([byteArray], {type: "application/octet-stream"});
+       const maskFile = new File([blob], "ai_tumor_mask.nii.gz");
+       
+       // 3. Layer mask as an overlay
+       await window.nv.loadFromFile(maskFile);
+       
+       // 4. Style the mask (red/magma, 50% transparency)
+       if (window.nv.volumes.length > 1) {
+           window.nv.volumes[1].colormap = "magma";
+           window.nv.volumes[1].opacity = 0.5;
+           window.nv.updateGLVolume();
+       }
+    }
+
   } catch(e) {
     hideLoading();
     document.querySelector('#loading p').textContent = 'Running AI inference…';
@@ -800,7 +837,7 @@ async function runImagingCSV() {
   }
 }
 
-function renderImagingFileResult(d, source, note) {
+function renderImagingFileResult(d, source, note, showDicomBtn=false) {
   const el = document.getElementById('result-imaging');
   el.classList.remove('hidden');
   el.innerHTML = `
@@ -811,6 +848,14 @@ function renderImagingFileResult(d, source, note) {
     <div class="prob-grid">
       ${probBar('Metastasis Probability (Radiomic Signature)', d.probability, '49 PyRadiomics features')}
     </div>
+    ${showDicomBtn ? `
+    <div style="margin-top:20px; text-align:center;">
+       <button onclick="openViewerModal()" style="background: linear-gradient(135deg, #ff007f, #7f00ff); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4); transition: transform 0.2s;">
+         🩻 Open 3D Clinical Workstation
+       </button>
+       <div style="margin-top: 8px; font-size: 11px; color: #aaa;">View AI auto-segmentation perfectly overlaid on the CT Scan</div>
+    </div>
+    ` : ''}
     ${note ? `<div style="margin-top:12px;font-size:12px;color:var(--text3)">ℹ️ ${note}</div>` : ''}
     <p style="margin-top:16px;font-size:12px;color:var(--text3)">
       XGBoost + SMOTE · Recall 100% · Threshold 0.017
