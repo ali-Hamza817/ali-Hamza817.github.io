@@ -383,21 +383,29 @@ def upload_radiomics_auto_segment():
         img_path  = os.path.join(tmp_dir, 'image.nii.gz')
         image_file.save(img_path)
 
-        # 1. Run TotalSegmentator for kidney_tumor
+        # 1. Run TotalSegmentator for kidneys
         try:
             subprocess.run([
                 "TotalSegmentator", 
                 "-i", img_path, 
                 "-o", tmp_dir, 
-                "-rs", "kidney_tumor", 
+                "-rs", "kidney_left", "kidney_right", 
                 "--fast"
             ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as e:
             return jsonify({"error": f"TotalSegmentator failed: {e.stderr.decode()}"}), 500
 
-        mask_path = os.path.join(tmp_dir, 'kidney_tumor.nii.gz')
-        if not os.path.exists(mask_path):
-            return jsonify({"error": "Auto-segmentation completed, but no kidney tumour was found in this scan."}), 400
+        mask_path_l = os.path.join(tmp_dir, 'kidney_left.nii.gz')
+        mask_path_r = os.path.join(tmp_dir, 'kidney_right.nii.gz')
+        
+        mask_path = None
+        if os.path.exists(mask_path_l) and os.path.getsize(mask_path_l) > 1000:
+            mask_path = mask_path_l
+        elif os.path.exists(mask_path_r) and os.path.getsize(mask_path_r) > 1000:
+            mask_path = mask_path_r
+
+        if not mask_path:
+            return jsonify({"error": "Auto-segmentation completed, but no kidney was found in this scan."}), 400
 
         # 2. Run PyRadiomics
         from radiomics import featureextractor
