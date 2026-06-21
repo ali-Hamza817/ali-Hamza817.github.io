@@ -1,0 +1,11 @@
+nohup: ignoring input
+[2026-06-21 13:36:29 +0000] [2273907] [INFO] Starting gunicorn 26.0.0
+[2026-06-21 13:36:29 +0000] [2273907] [INFO] Listening at: http://0.0.0.0:8000 (2273907)
+[2026-06-21 13:36:29 +0000] [2273907] [INFO] Using worker: gthread
+[2026-06-21 13:36:29 +0000] [2273912] [INFO] Booting worker with pid: 2273912
+[2026-06-21 13:36:29 +0000] [2273907] [INFO] Control socket listening at /run/user/1000/gunicorn.ctl
+GLCM is symmetrical, therefore Sum Average = 2 * Joint Average, only 1 needs to be calculated
+/home/administrator/miniconda3/lib/python3.12/site-packages/sklearn/utils/validation.py:2827: UserWarning: X does not have valid feature names, but StandardScaler was fitted with feature names
+  warnings.warn(
+/home/administrator/miniconda3/lib/python3.12/site-packages/sklearn/utils/validation.py:2827: UserWarning: X does not have valid feature names, but StandardScaler was fitted with feature names
+  warnings.warn(

@@ -438,13 +438,15 @@ def upload_radiomics_auto_segment():
             pass
             
         try:
+            env = os.environ.copy()
+            env["CUDA_VISIBLE_DEVICES"] = "2"
             subprocess.run([
                 "TotalSegmentator", 
                 "-i", img_path, 
                 "-o", tmp_dir, 
                 "-rs", "kidney_left", "kidney_right", 
                 "--fast"
-            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
         except subprocess.CalledProcessError as e:
             return jsonify({"error": f"TotalSegmentator failed: {e.stderr.decode()}"}), 500
 
