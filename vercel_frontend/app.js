@@ -489,17 +489,38 @@ async function runFusion() {
   let genomic = null;
   if (useGeno) {
     genomic = {};
+    let sumGeno = 0;
     document.querySelectorAll('#f-genomic .gene-input').forEach(el => {
-      genomic[el.id.replace('fg_', '')] = parseFloat(el.value) || 0;
+      let val = parseFloat(el.value) || 0;
+      genomic[el.id.replace('fg_', '')] = val;
+      sumGeno += Math.abs(val);
     });
+    if (sumGeno === 0) {
+      alert("Genomic modality selected, but all gene expression values are 0. Please load patient data or input values manually.");
+      return;
+    }
   }
 
   let imaging = null;
   if (useImag) {
     imaging = {};
+    let sumImag = 0;
     document.querySelectorAll('#f-imaging .gene-input').forEach(el => {
-      imaging[el.id.replace('fr_', '')] = parseFloat(el.value) || 0;
+      let val = parseFloat(el.value) || 0;
+      imaging[el.id.replace('fr_', '')] = val;
+      sumImag += Math.abs(val);
     });
+    if (sumImag === 0) {
+      alert("Imaging modality selected, but all radiomics features are 0. Please upload a CT scan to run Auto-Segmentation, or load patient data.");
+      return;
+    }
+  }
+
+  if (useClin) {
+    if (clinical.tumor_size_cm <= 0 || clinical.age <= 0 || isNaN(clinical.tumor_size_cm) || isNaN(clinical.age)) {
+      alert("Clinical modality selected, but Age or Tumor Size is invalid (0 or empty). Please input valid patient demographics.");
+      return;
+    }
   }
 
   showLoading();
