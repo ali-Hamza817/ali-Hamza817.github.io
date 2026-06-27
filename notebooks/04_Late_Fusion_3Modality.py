@@ -17,6 +17,7 @@ from sklearn.model_selection import StratifiedKFold, cross_val_predict
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
+import xgboost as xgb
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import (roc_auc_score, precision_recall_curve, auc, 
                              precision_score, recall_score, f1_score, fbeta_score, roc_curve)
@@ -93,13 +94,16 @@ clin_features['year_diagnosis'] = 2014
 expected_clin_cols = ['age', 'sex', 't_stage', 'n_stage', 'tumor_size_cm', 'grade', 'histology_enc', 'prior_tx', 'year_diagnosis']
 clin_features = clin_features[expected_clin_cols]
 
-# Load Genomic Data (5 Genes)
+# Load Genomic Data (54 Genes)
+M2_FEATURES = joblib.load('../models/dataset_2/Model2_Features.pkl')
 gen_path = '../datasets/dataset_2/HiSeqV2.gz'
 gen_df = pd.read_csv(gen_path, sep='\t', index_col=0).T
 gen_df.index = gen_df.index.str[:12]
-target_genes = ['FKBP15', 'SLC31A1', 'CPT2', 'PATJ', 'CALR']
-available_genes = [g for g in target_genes if g in gen_df.columns]
+available_genes = [g for g in M2_FEATURES if g in gen_df.columns]
 gen_features = gen_df[available_genes]
+for mg in [g for g in M2_FEATURES if g not in gen_df.columns]:
+    gen_features[mg] = 0.0
+gen_features = gen_features[M2_FEATURES]
 
 # Load Imaging Data (Radiomics)
 rad_path = '../datasets/dataset_3_radiomics.csv'
@@ -116,46 +120,41 @@ rad_df = rad_df[~rad_df.index.duplicated(keep='first')]
 # Inner Join across all 3 modalities
 df = pd.concat([clin_df[['metastasis']], clin_features, gen_features, rad_df], axis=1, join='inner')
 
-y_tcga = df['metastasis']
-X_clin = df[expected_clin_cols]
-X_gen = df[available_genes]
-
-# Drop target column from radiomics dataframe features
+y_tcga = df['metastasis'].values
+X_clin = df[expected_clin_cols].values
+X_gen = df[M2_FEATURES].values
 rad_features_list = joblib.load('../models/dataset_3/Model3_Features.pkl')
-X_rad = df[rad_features_list]
+X_rad = df[rad_features_list].values
 
 print(f"Final 3-Modality Fusion Cohort: {df.shape[0]} patients")
-print(y_tcga.value_counts())
+print(pd.Series(y_tcga).value_counts())
 
 
 # ## 2. Generate Probabilities ($P_1$, $P_2$, $P_3$)
 
 # In[4]:
 
+import __main__
+def f2_weighted_loss(*args, **kwargs):
+    pass
+__main__.f2_weighted_loss = f2_weighted_loss
 
-cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
-# P1: Model 1 (Clinical Transfer)
+# P1: Model 1 (Clinical SEER)
 model1 = joblib.load('../models/dataset_1/Model1_Clinical_SEER.pkl')
-P1_oof = model1.predict_proba(X_clin)[:, 1]
+P1_raw = model1.predict(X_clin, raw_score=True)
+P1_oof = 1.0 / (1.0 + np.exp(-P1_raw))
 
 # P2: Model 2 (Genomic TCGA)
-scaler_gen = StandardScaler()
-X_gen_scaled = scaler_gen.fit_transform(X_gen)
-
-model2_base = LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5, random_state=42, max_iter=5000, class_weight='balanced')
-P2_oof = cross_val_predict(model2_base, X_gen_scaled, y_tcga, cv=cv, method='predict_proba')[:, 1]
+model2 = joblib.load('../models/dataset_2/Model2_Genomic_TCGA.pkl')
+scaler_gen = joblib.load('../models/dataset_2/Model2_Scaler.pkl')
+P2_oof = model2.predict_proba(scaler_gen.transform(X_gen))[:, 1]
 
 # P3: Model 3 (Imaging TCGA)
-scaler_rad = StandardScaler()
-X_rad_scaled = scaler_rad.fit_transform(X_rad)
-X_rad_scaled = pd.DataFrame(X_rad_scaled, columns=X_rad.columns)
-
-model3_base = XGBClassifier(
-    n_estimators=100, max_depth=4, learning_rate=0.05, 
-    subsample=0.8, colsample_bytree=0.8, random_state=42, eval_metric='logloss'
-)
-P3_oof = cross_val_predict(model3_base, X_rad_scaled, y_tcga, cv=cv, method='predict_proba')[:, 1]
+model3_booster = xgb.Booster()
+model3_booster.load_model('../models/dataset_3/Model3_Imaging_TCGA.json')
+scaler_rad = joblib.load('../models/dataset_3/Model3_Scaler.pkl')
+dmat = xgb.DMatrix(scaler_rad.transform(X_rad), feature_names=rad_features_list)
+P3_oof = model3_booster.predict(dmat)
 
 print("Successfully extracted P1 (Transfer), P2 (OOF), and P3 (OOF).")
 
@@ -163,7 +162,6 @@ print("Successfully extracted P1 (Transfer), P2 (OOF), and P3 (OOF).")
 # ## 3. 3-Modality Late Fusion Ablation Study
 
 # In[5]:
-
 
 metrics = {}
 metrics['Model 1: Clinical (SEER)'] = evaluate_model(y_tcga, P1_oof)
@@ -182,10 +180,74 @@ P_fusion_B = (w1 * P1_oof + w2 * P2_oof + w3 * P3_oof) / (w1 + w2 + w3)
 metrics['Fusion B: Weighted avg'] = evaluate_model(y_tcga, P_fusion_B)
 
 # Strategy C: Stacking (Nested CV)
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 stack_features = np.column_stack([P1_oof, P2_oof, P3_oof])
 meta_model = LogisticRegression(C=0.1, random_state=42)
 P_fusion_C = cross_val_predict(meta_model, stack_features, y_tcga, cv=cv, method='predict_proba')[:, 1]
 metrics['Fusion C: Stacking'] = evaluate_model(y_tcga, P_fusion_C)
+
+# Strategy D: Cascade Max
+P_fusion_D = np.maximum(np.maximum(P1_oof, P2_oof), P3_oof)
+metrics['Fusion D: Cascade max'] = evaluate_model(y_tcga, P_fusion_D)
+
+# 1. Bayesian Evidence Fusion (BEF)
+def run_bef(p1, p2, p3, prior=18/126):
+    log_prior_odds = np.log(prior / (1 - prior))
+    probs = []
+    for i in range(len(y_tcga)):
+        accum_llr = log_prior_odds
+        for p in [p1[i], p2[i], p3[i]]:
+            p_c = np.clip(p, 1e-6, 1 - 1e-6)
+            llr_i = np.log(p_c / (1 - p_c)) - log_prior_odds
+            accum_llr += llr_i
+        probs.append(1 / (1 + np.exp(-accum_llr)))
+    return np.array(probs)
+
+P_bef = run_bef(P1_oof, P2_oof, P3_oof)
+metrics['BEF: Bayesian Evidence Fusion'] = evaluate_model(y_tcga, P_bef)
+
+# 2. Dempster-Shafer Theory Fusion (DST)
+def run_dst(p1, p2, p3, auroc1=0.736, auroc2=0.897, auroc3=0.928):
+    def reliability(auroc):
+        return 2 * abs(auroc - 0.5)
+    def make_mass(p, r):
+        return {'M1': p * r, 'M0': (1 - p) * r, 'uncertain': 1 - r}
+    def dempster_combine(m1, m2):
+        K = (m1['M1'] * m2['M0']) + (m1['M0'] * m2['M1'])
+        normaliser = 1 - K if K < 1.0 else 1e-6
+        return {
+            'M1': (m1['M1'] * m2['M1'] + m1['M1'] * m2['uncertain'] + m1['uncertain'] * m2['M1']) / normaliser,
+            'M0': (m1['M0'] * m2['M0'] + m1['M0'] * m2['uncertain'] + m1['uncertain'] * m2['M0']) / normaliser,
+            'uncertain': (m1['uncertain'] * m2['uncertain']) / normaliser,
+        }
+    probs = []
+    r1, r2, r3 = reliability(auroc1), reliability(auroc2), reliability(auroc3)
+    for i in range(len(y_tcga)):
+        m1 = make_mass(np.clip(p1[i], 1e-6, 1-1e-6), r1)
+        m2 = make_mass(np.clip(p2[i], 1e-6, 1-1e-6), r2)
+        m3 = make_mass(np.clip(p3[i], 1e-6, 1-1e-6), r3)
+        combined = dempster_combine(m1, m2)
+        combined = dempster_combine(combined, m3)
+        probs.append(combined['M1'] + 0.5 * combined['uncertain'])
+    return np.array(probs)
+
+P_dst = run_dst(P1_oof, P2_oof, P3_oof)
+metrics['DST: Dempster-Shafer Fusion'] = evaluate_model(y_tcga, P_dst)
+
+# 3. Entropy-Regularised Optimal Transport Fusion (OT-Fusion)
+# Weights: Clinical=0.1016, Genomic=0.3091, Imaging=0.5892, lambda=0.001
+def run_ot(p1, p2, p3, w1=0.1016, w2=0.3091, w3=0.5892, lam=0.001):
+    probs = []
+    for i in range(len(y_tcga)):
+        numerator = (w1 * np.log(p1[i]/(1-p1[i])) + 
+                     w2 * np.log(p2[i]/(1-p2[i])) + 
+                     w3 * np.log(p3[i]/(1-p3[i])))
+        denominator = w1 + w2 + w3 + lam
+        probs.append(1 / (1 + np.exp(-numerator/denominator)))
+    return np.array(probs)
+
+P_ot = run_ot(np.clip(P1_oof, 1e-6, 1-1e-6), np.clip(P2_oof, 1e-6, 1-1e-6), np.clip(P3_oof, 1e-6, 1-1e-6))
+metrics['OT: Optimal Transport Fusion'] = evaluate_model(y_tcga, P_ot)
 
 # Compile Results
 results_df = pd.DataFrame(metrics).T
