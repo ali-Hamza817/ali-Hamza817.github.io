@@ -78,6 +78,45 @@ def predict_model3(data):
     dmat = xgb.DMatrix(scaler3.transform(row), feature_names=M3_FEATURES)
     return float(model3_booster.predict(dmat)[0])
 
+def compute_shapley_contributions(p1, p2, p3):
+    from itertools import combinations
+    import math
+    
+    modalities = {'clinical': p1, 'genomic': p2, 'imaging': p3}
+    weights    = {'clinical': 0.1016, 'genomic': 0.3091, 'imaging': 0.5892}
+    available  = {k: v for k, v in modalities.items() if v is not None}
+    M = list(available.keys())
+    n = len(M)
+    
+    def coalition_value(subset):
+        if len(subset) == 0:
+            return 18/126  # prior probability
+        pool = []
+        for mod in subset:
+            p_val = available[mod]
+            w_val = weights[mod]
+            pool.append((np.clip(p_val, 1e-6, 1-1e-6), w_val))
+        
+        numerator = sum(w * np.log(p / (1 - p)) for p, w in pool)
+        denominator = sum(w for p, w in pool) + 0.001
+        return 1.0 / (1.0 + np.exp(-numerator / denominator))
+
+    shapley = {}
+    for mod_i in M:
+        phi = 0.0
+        others = [m for m in M if m != mod_i]
+        # All subsets of others
+        for size in range(len(others) + 1):
+            for subset in combinations(others, size):
+                subset = list(subset)
+                weight = (math.factorial(len(subset)) * 
+                          math.factorial(n - len(subset) - 1) / 
+                          math.factorial(n))
+                marginal = coalition_value(subset + [mod_i]) - coalition_value(subset)
+                phi += weight * marginal
+        shapley[mod_i] = round(phi, 4)
+    return shapley
+
 def compute_fusions(p1, p2, p3):
     available = {}
     if p1 is not None: available['clinical'] = (p1, 0.6250)
@@ -162,6 +201,8 @@ def compute_fusions(p1, p2, p3):
         mean_p = sum(probs_list) / len(probs_list)
         jsd = sum(p * np.log(p / mean_p) + (1-p) * np.log((1-p) / (1-mean_p)) for p in probs_list) / len(probs_list)
 
+    shapley_vals = compute_shapley_contributions(p1, p2, p3)
+
     return {
         "fusion_a_simple_avg":  round(float(simple_avg), 4),
         "fusion_b_f2_weighted": round(float(weighted_avg), 4),
@@ -172,6 +213,7 @@ def compute_fusions(p1, p2, p3):
         "fusion_dst_conflict":  round(float(conflict), 4),
         "fusion_ot":            round(float(fusion_ot), 4),
         "fusion_ot_jsd":        round(float(jsd), 4),
+        "fusion_shapley":       shapley_vals,
         
         "modalities_used": list(available.keys()),
         "modality_count": len(available)

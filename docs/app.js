@@ -568,7 +568,7 @@ function renderFusionResult(d) {
     <div class="model-info-chips">
       <span class="info-chip">★ Best BEF AUROC 0.979</span>
       <span class="info-chip">OT-Fusion AUROC 0.970</span>
-      <span class="info-chip">Dempster-Shafer AUROC 0.959</span>
+      <span class="info-chip">Dempster-Shafer AUROC 0.980</span>
       <span class="info-chip">126-patient Strict Inner Join</span>
     </div>
 
@@ -599,12 +599,51 @@ function renderFusionResult(d) {
         <div style="font-size:11px;color:var(--text3);margin-top:4px;">JS Divergence: ${d.fusion_ot_jsd}</div>
       </div>
       <div class="fusion-card" style="box-shadow:none; border:1px solid var(--border);">
-        <div class="fusion-card-label">Dempster-Shafer · AUROC 0.959</div>
+        <div class="fusion-card-label">Dempster-Shafer · AUROC 0.980</div>
         <div class="fusion-card-name">Evidence Theory Fusion</div>
         <div class="fusion-card-prob ${riskCls(d.fusion_dst)}">${pctLabel(d.fusion_dst)}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:4px;">Conflict K: ${d.fusion_dst_conflict}</div>
       </div>
     </div>
+
+    ${d.fusion_shapley ? `
+    <div class="fusion-result-grid" style="margin-top:20px;">
+      <div style="grid-column:1/-1; font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">
+        Feature 1: Modality Shapley Attributions (OT-Fusion Game)
+      </div>
+      <div class="fusion-card" style="grid-column:1/-1; box-shadow:none; border:1px solid var(--border); padding: 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span style="font-weight:bold; font-size:14px; color:white;">Cooperative Modality Contributions</span>
+          <span class="info-chip" style="margin:0; background:rgba(2, 132, 199, 0.15); color:var(--accent);">Shapley Value Explainability</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between;">
+          ${d.fusion_shapley.clinical !== undefined ? `
+          <div style="flex:1; min-width:140px; background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+            <div style="font-size:11px; color:var(--text3);">🏥 Clinical Modality</div>
+            <div style="font-size:18px; font-weight:bold; color:${d.fusion_shapley.clinical >= 0 ? '#10b981' : '#ef4444'}; margin-top:4px;">
+              ${d.fusion_shapley.clinical >= 0 ? '+' : ''}${(d.fusion_shapley.clinical * 100).toFixed(1)}%
+            </div>
+          </div>` : ''}
+          ${d.fusion_shapley.genomic !== undefined ? `
+          <div style="flex:1; min-width:140px; background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+            <div style="font-size:11px; color:var(--text3);">🧬 Genomic Modality</div>
+            <div style="font-size:18px; font-weight:bold; color:${d.fusion_shapley.genomic >= 0 ? '#10b981' : '#ef4444'}; margin-top:4px;">
+              ${d.fusion_shapley.genomic >= 0 ? '+' : ''}${(d.fusion_shapley.genomic * 100).toFixed(1)}%
+            </div>
+          </div>` : ''}
+          ${d.fusion_shapley.imaging !== undefined ? `
+          <div style="flex:1; min-width:140px; background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+            <div style="font-size:11px; color:var(--text3);">☢️ Imaging Modality</div>
+            <div style="font-size:18px; font-weight:bold; color:${d.fusion_shapley.imaging >= 0 ? '#10b981' : '#ef4444'}; margin-top:4px;">
+              ${d.fusion_shapley.imaging >= 0 ? '+' : ''}${(d.fusion_shapley.imaging * 100).toFixed(1)}%
+            </div>
+          </div>` : ''}
+        </div>
+        <div style="font-size:11px; color:var(--text3); margin-top:12px; line-height:1.4;">
+          <strong>Game Theory Insight:</strong> These values represent the average marginal contribution of each modality to the final <strong>OT-Fusion</strong> risk score (${(d.fusion_ot * 100).toFixed(1)}%) across all possible subset combinations.
+        </div>
+      </div>
+    </div>` : ''}
 
     <details class="premium-details" style="margin-top:20px;">
       <summary>
