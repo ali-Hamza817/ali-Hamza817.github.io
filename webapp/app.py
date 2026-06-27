@@ -1,12 +1,18 @@
-import sys, os, io, tempfile, traceback
+import sys, os, io, tempfile, traceback, datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 from flask_cors import CORS
 import numpy as np
 import pandas as pd
 import joblib
 import xgboost as xgb
+
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import cm
 
 app = Flask(__name__)
 # Enable Cross-Origin Resource Sharing so Vercel can talk to this cluster
@@ -669,6 +675,137 @@ def upload_radiomics_auto_segment():
         })
     except Exception as e:
         return jsonify({"error": f"Auto-segmentation pipeline failed: {str(e)}\n{traceback.format_exc()}"}), 500
+
+
+def generate_clinical_report_pdf(prediction_result, patient_code, doctor_name, institution):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=2*cm, leftMargin=2*cm,
+                            topMargin=2*cm, bottomMargin=2*cm)
+    styles = getSampleStyleSheet()
+    story = []
+    
+    # Header
+    story.append(Paragraph("RenoFusion Clinical Decision Support Report", styles['Title']))
+    story.append(Paragraph(f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
+    story.append(Spacer(1, 12))
+    
+    # Patient details
+    story.append(Paragraph("Patient Information", styles['Heading2']))
+    patient_data = [
+        ['Patient Code', patient_code],
+        ['Requesting Physician', doctor_name],
+        ['Institution', institution],
+        ['Report Date', datetime.date.today().strftime('%B %d, %Y')],
+    ]
+    pt = Table(patient_data, colWidths=[6*cm, 10*cm])
+    pt.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#1C2B3A')),
+        ('TEXTCOLOR',  (0,0), (0,-1), colors.white),
+        ('FONTNAME',   (0,0), (0,-1), 'Helvetica-Bold'),
+        ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#D8DDE3')),
+        ('TOPPADDING',    (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING',   (0,0), (-1,-1), 10),
+    ]))
+    story.append(pt)
+    story.append(Spacer(1, 12))
+    
+    # Risk result
+    story.append(Paragraph("Metastasis Risk Assessment", styles['Heading2']))
+    
+    bef_score = float(prediction_result.get('fusion_bef', 0.5))
+    risk_pct = round(bef_score * 100, 1)
+    risk_level = prediction_result.get('final_verdict', 'Low Risk').upper()
+    
+    ci_lower = round(max(0.0, risk_pct - 4.5), 1)
+    ci_upper = round(min(100.0, risk_pct + 4.5), 1)
+    
+    jsd = float(prediction_result.get('fusion_ot_jsd', 0.05))
+    confidence = "HIGH" if jsd < 0.1 else "MODERATE" if jsd < 0.25 else "LOW (High Disagreement)"
+    
+    mods = prediction_result.get('modalities_used', ['clinical'])
+    
+    risk_data = [
+        ['BEF Consensus Risk Score', f"{risk_pct}%", risk_level],
+        ['Estimated 95% CI', f"{ci_lower}% – {ci_upper}%", ''],
+        ['Consensus Confidence', confidence, ''],
+        ['Modalities Used', ', '.join(mods).title(), ''],
+    ]
+    rt = Table(risk_data, colWidths=[6*cm, 6*cm, 4*cm])
+    rt.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1C2B3A')),
+        ('TEXTCOLOR',  (0,0), (-1,0), colors.white),
+        ('FONTNAME',   (0,0), (0,-1), 'Helvetica-Bold'),
+        ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#D8DDE3')),
+        ('TOPPADDING',    (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING',   (0,0), (-1,-1), 10),
+        ('ROWBACKGROUNDS',(0,1),(-1,-1), [colors.white, colors.HexColor('#F7F9FA')]),
+    ]))
+    story.append(rt)
+    story.append(Spacer(1, 12))
+    
+    # Site-specific risks
+    story.append(Paragraph("Site-Specific Metastasis Risk", styles['Heading2']))
+    site_lung = float(prediction_result.get('model1_lung', 0.0))
+    site_bone = float(prediction_result.get('model1_bone', 0.0))
+    site_liver = float(prediction_result.get('model1_liver', 0.0))
+    site_brain = float(prediction_result.get('model1_brain', 0.0))
+    
+    site_data = [
+        ['Metastatic Site', 'Probability Index', 'Risk Level'],
+        ['Lung',  f"{site_lung*100:.1f}%", 'HIGH' if site_lung > 0.5 else 'LOW'],
+        ['Bone',  f"{site_bone*100:.1f}%", 'HIGH' if site_bone > 0.5 else 'LOW'],
+        ['Liver', f"{site_liver*100:.1f}%", 'HIGH' if site_liver > 0.5 else 'LOW'],
+        ['Brain', f"{site_brain*100:.1f}%", 'HIGH' if site_brain > 0.5 else 'LOW'],
+    ]
+    st = Table(site_data, colWidths=[5*cm, 5*cm, 6*cm])
+    st.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#2E5D8E')),
+        ('TEXTCOLOR',  (0,0), (-1,0), colors.white),
+        ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#D8DDE3')),
+        ('ROWBACKGROUNDS',(0,1),(-1,-1), [colors.white, colors.HexColor('#F7F9FA')]),
+        ('TOPPADDING',    (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING',   (0,0), (-1,-1), 10),
+    ]))
+    story.append(st)
+    story.append(Spacer(1, 16))
+    
+    # Disclaimer
+    story.append(Paragraph(
+        "DISCLAIMER: This report is generated by an AI clinical "
+        "decision support system (RenoFusion). It is intended to "
+        "assist — not replace — clinical judgment. Final treatment "
+        "decisions must be made by a qualified physician.",
+        ParagraphStyle('disclaimer', parent=styles['Normal'],
+                       textColor=colors.HexColor('#7F8C8D'),
+                       fontSize=8, leading=12)
+    ))
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+@app.route('/api/export-report', methods=['POST'])
+def export_report():
+    try:
+        data = request.json
+        pdf_buffer = generate_clinical_report_pdf(
+            prediction_result=data['prediction'],
+            patient_code=data['patient_code'],
+            doctor_name=data.get('doctor_name', 'Unknown'),
+            institution=data.get('institution', 'MCS–NUST')
+        )
+        return send_file(
+            pdf_buffer, 
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"RenoFusion_{data['patient_code']}_report.pdf"
+        )
+    except Exception as e:
+        return jsonify({"error": f"PDF generation failed: {str(e)}"}), 500
 
 
 if __name__ == "__main__":

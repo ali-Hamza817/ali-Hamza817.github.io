@@ -476,6 +476,8 @@ function clearPanelInputs(panelId) {
   });
 }
 
+let lastPredictionResult = null;
+
 async function runFusion() {
   const useClin = document.getElementById('enable_clinical').checked;
   const useGeno = document.getElementById('enable_genomic').checked;
@@ -548,6 +550,7 @@ async function runFusion() {
     const data = await res.json();
     hideLoading();
     if (data.error) throw new Error(data.error);
+    lastPredictionResult = data;
     renderFusionResult(data);
   } catch(e) {
     hideLoading();
@@ -563,7 +566,12 @@ function renderFusionResult(d) {
   el.innerHTML = `
     <div class="result-header">
       <div class="result-title">⚗️ Mathematically Rigorous Fusion — Final Verdict</div>
-      <div class="risk-badge ${d.final_risk_class}">⬡ ${d.final_verdict}</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="action-btn" onclick="exportPDF()" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:11px; display:flex; align-items:center; gap:4px;">
+          📄 Export Report
+        </button>
+        <div class="risk-badge ${d.final_risk_class}">⬡ ${d.final_verdict}</div>
+      </div>
     </div>
     <div class="model-info-chips">
       <span class="info-chip">★ Best BEF AUROC 0.979</span>
@@ -921,4 +929,50 @@ function renderImagingFileResult(d, source, note, showDicomBtn=false) {
     <p style="margin-top:16px;font-size:12px;color:var(--text3)">
       XGBoost + SMOTE · Recall 100% · Threshold 0.017
     </p>`;
+}
+
+async function exportPDF() {
+  if (!lastPredictionResult) {
+    alert("No prediction result available to export.");
+    return;
+  }
+  
+  const patientCode = prompt("Enter Patient Code / ID for the report:", "PT-" + Math.floor(1000 + Math.random()*9000)) || "";
+  if (!patientCode.trim()) {
+    alert("Patient Code is required for the report.");
+    return;
+  }
+  
+  const doctorName = prompt("Enter Requesting Physician Name:", "Dr. Hamza") || "Dr. Hamza";
+  const institution = prompt("Enter Institution:", "MCS-NUST") || "MCS-NUST";
+  
+  showLoading();
+  try {
+    const res = await fetch(API_BASE_URL + '/api/export-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prediction: lastPredictionResult,
+        patient_code: patientCode,
+        doctor_name: doctorName,
+        institution: institution
+      })
+    });
+    
+    if (!res.ok) throw new Error("Server error during PDF generation.");
+    
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `RenoFusion_${patientCode}_report.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (e) {
+    alert("Failed to export PDF: " + e.message);
+  } finally {
+    hideLoading();
+  }
 }
