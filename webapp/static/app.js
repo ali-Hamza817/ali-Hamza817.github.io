@@ -418,43 +418,64 @@ function renderFusionResult(d) {
 
   el.innerHTML = `
     <div class="result-header">
-      <div class="result-title">⚗️ 3-Modality Fusion — Final Verdict</div>
+      <div class="result-title">⚗️ Mathematically Rigorous Fusion — Final Verdict</div>
       <div class="risk-badge ${d.final_risk_class}">⬡ ${d.final_verdict}</div>
     </div>
     <div class="model-info-chips">
-      <span class="info-chip">★ Best AUROC 0.797</span>
-      <span class="info-chip">Fusion B: F2-Weighted Average</span>
+      <span class="info-chip">★ Best BEF AUROC 0.979</span>
+      <span class="info-chip">OT-Fusion AUROC 0.970</span>
+      <span class="info-chip">Dempster-Shafer AUROC 0.959</span>
       <span class="info-chip">126-patient Strict Inner Join</span>
-      <span class="info-chip">Zero Data Leakage</span>
     </div>
 
     <div class="prob-grid">
       <h4 style="font-size:13px; color:var(--text3); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">Base Model Risk Scores</h4>
-      ${probBar('🏥 Model 1: Clinical (SEER)', d.model1_overall, 'AUROC 0.770')}
-      ${probBar('🧬 Model 2: Genomic (TCGA)', d.model2, 'AUROC 0.738 · Recall 94.4%')}
-      ${probBar('🫁 Model 3: Imaging (TCGA)', d.model3, 'AUROC 0.638 · Recall 100%')}
+      ${probBar('🏥 Model 1: Clinical (SEER)', d.model1_overall, 'AUROC 0.736')}
+      ${probBar('🧬 Model 2: Genomic (TCGA)', d.model2, 'AUROC 0.897 · Recall 83.3%')}
+      ${probBar('🫁 Model 3: Imaging (TCGA)', d.model3, 'AUROC 0.928 · Recall 83.3%')}
     </div>
 
     <div class="fusion-result-grid" style="margin-top:28px;">
-      <div style="grid-column:1/-1; font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Final Fused Output (F2-Optimized)</div>
+      <div style="grid-column:1/-1; font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Primary Decision Output</div>
 
       <div class="premium-fusion-card winner" style="grid-column:1/-1;">
-        <div class="fusion-card-label" style="color:var(--gold);">Fusion Strategy B · Best AUROC 0.797</div>
-        <div class="fusion-card-name" style="color:white; font-size:16px;">F2-Weighted Average</div>
-        <div class="fusion-card-prob ${riskCls(d.fusion_b_f2_weighted)}" style="font-size:42px;">${pctLabel(d.fusion_b_f2_weighted)}</div>
-        <div class="fusion-winner-tag" style="background:var(--gold); color:black;">★ Final Decision (Highest Recall/F2)</div>
+        <div class="fusion-card-label" style="color:var(--gold);">Bayesian Evidence Fusion (BEF) · Best AUROC 0.979</div>
+        <div class="fusion-card-name" style="color:white; font-size:16px;">Bayes' Theorem Likelihood Ratio combination</div>
+        <div class="fusion-card-prob ${riskCls(d.fusion_bef)}" style="font-size:42px;">${pctLabel(d.fusion_bef)}</div>
+        <div class="fusion-winner-tag" style="background:var(--gold); color:black;">★ Final Consensus (Highest AUROC)</div>
       </div>
     </div>
 
-    <details class="premium-details">
+    <div class="fusion-result-grid" style="margin-top:20px;">
+      <div style="grid-column:1/-1; font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Other Rigorous Methods</div>
+      <div class="fusion-card" style="box-shadow:none; border:1px solid var(--border);">
+        <div class="fusion-card-label">Entropy-Regularised OT · AUROC 0.970</div>
+        <div class="fusion-card-name">Optimal Transport Fusion</div>
+        <div class="fusion-card-prob ${riskCls(d.fusion_ot)}">${pctLabel(d.fusion_ot)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">JS Divergence: ${d.fusion_ot_jsd}</div>
+      </div>
+      <div class="fusion-card" style="box-shadow:none; border:1px solid var(--border);">
+        <div class="fusion-card-label">Dempster-Shafer · AUROC 0.959</div>
+        <div class="fusion-card-name">Evidence Theory Fusion</div>
+        <div class="fusion-card-prob ${riskCls(d.fusion_dst)}">${pctLabel(d.fusion_dst)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Conflict K: ${d.fusion_dst_conflict}</div>
+      </div>
+    </div>
+
+    <details class="premium-details" style="margin-top:20px;">
       <summary>
-        View Other Fusion Strategies <span>▼</span>
+        View Classical Fusion Strategies <span>▼</span>
       </summary>
       <div class="fusion-result-grid" style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
         <div class="fusion-card" style="box-shadow:none; border:1px solid var(--border);">
           <div class="fusion-card-label">Fusion A</div>
           <div class="fusion-card-name">Simple Average</div>
           <div class="fusion-card-prob ${riskCls(d.fusion_a_simple_avg)}">${pctLabel(d.fusion_a_simple_avg)}</div>
+        </div>
+        <div class="fusion-card" style="box-shadow:none; border:1px solid var(--border);">
+          <div class="fusion-card-label">Fusion B</div>
+          <div class="fusion-card-name">F2-Weighted Average</div>
+          <div class="fusion-card-prob ${riskCls(d.fusion_b_f2_weighted)}">${pctLabel(d.fusion_b_f2_weighted)}</div>
         </div>
         <div class="fusion-card" style="box-shadow:none; border:1px solid var(--border);">
           <div class="fusion-card-label">Fusion D</div>

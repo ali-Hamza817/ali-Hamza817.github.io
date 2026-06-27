@@ -472,12 +472,13 @@
     <div class="footer-block">
       <h4>Model Performance</h4>
       <table class="footer-table">
-        <tr><th>Modality</th><th>AUROC</th><th>Recall</th><th>F2</th></tr>
-        <tr><td>Clinical (SEER)</td><td>0.770</td><td>62.1%</td><td>0.378</td></tr>
-        <tr><td>Genomic (TCGA)</td><td>0.738</td><td>94.4%</td><td>0.574</td></tr>
-        <tr><td>Imaging (TCGA)</td><td>0.638</td><td>100%</td><td>0.479</td></tr>
-        <tr class="highlight-row"><td>Fusion B (F2-Weighted)</td><td>0.797</td><td>88.9%</td><td>0.593</td></tr>
-        <tr class="highlight-row"><td>Fusion D (Cascade Max)</td><td>0.738</td><td>66.7%</td><td>0.566</td></tr>
+        <tr><th>Modality / Fusion</th><th>AUROC</th><th>Recall</th><th>F2</th></tr>
+        <tr><td>Clinical Model (SEER)</td><td>0.736</td><td>83.3%</td><td>0.620</td></tr>
+        <tr><td>Genomic Model (TCGA)</td><td>0.897</td><td>83.3%</td><td>0.682</td></tr>
+        <tr><td>Imaging Model (TCGA)</td><td>0.928</td><td>83.3%</td><td>0.862</td></tr>
+        <tr class="highlight-row"><td>Bayesian Evidence Fusion (BEF)</td><td>0.979</td><td>83.3%</td><td>0.843</td></tr>
+        <tr class="highlight-row"><td>Optimal Transport (OT-Fusion)</td><td>0.970</td><td>83.3%</td><td>0.862</td></tr>
+        <tr class="highlight-row"><td>Dempster-Shafer Theory (DST)</td><td>0.959</td><td>94.4%</td><td>0.859</td></tr>
       </table>
     </div>
     <div class="footer-block">

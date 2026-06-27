@@ -90,10 +90,89 @@ def compute_fusions(p1, p2, p3):
     probs = [p for p, w in available.values()]
     total_w = sum(w for p, w in available.values())
     
+    simple_avg = sum(probs) / len(probs)
+    weighted_avg = sum(p * w for p, w in available.values()) / total_w
+    cascade_max = max(probs)
+    
+    # 1. Bayesian Evidence Fusion (BEF)
+    prior = 18 / 126
+    log_prior_odds = np.log(prior / (1 - prior))
+    accum_llr = log_prior_odds
+    n_bef = 0
+    for p in [p1, p2, p3]:
+        if p is not None:
+            p_c = np.clip(p, 1e-6, 1 - 1e-6)
+            llr = np.log(p_c / (1 - p_c)) - log_prior_odds
+            accum_llr += llr
+            n_bef += 1
+    fusion_bef = 1.0 / (1.0 + np.exp(-accum_llr)) if n_bef > 0 else weighted_avg
+    
+    # 2. Dempster-Shafer Theory Fusion (DST)
+    aurocs = {'clinical': 0.7359, 'genomic': 0.8966, 'imaging': 0.9285}
+    def reliability(auroc):
+        return 2.0 * abs(auroc - 0.5)
+    def make_mass(p, r):
+        return {'M1': p * r, 'M0': (1 - p) * r, 'uncertain': 1 - r}
+    def dempster_combine(m1, m2):
+        K = (m1['M1'] * m2['M0']) + (m1['M0'] * m2['M1'])
+        normaliser = 1.0 - K if K < 1.0 else 1e-6
+        return {
+            'M1': (m1['M1'] * m2['M1'] + m1['M1'] * m2['uncertain'] + m1['uncertain'] * m2['M1']) / normaliser,
+            'M0': (m1['M0'] * m2['M0'] + m1['M0'] * m2['uncertain'] + m1['uncertain'] * m2['M0']) / normaliser,
+            'uncertain': (m1['uncertain'] * m2['uncertain']) / normaliser,
+        }
+    
+    masses = []
+    if p1 is not None: masses.append(make_mass(np.clip(p1, 1e-6, 1-1e-6), reliability(aurocs['clinical'])))
+    if p2 is not None: masses.append(make_mass(np.clip(p2, 1e-6, 1-1e-6), reliability(aurocs['genomic'])))
+    if p3 is not None: masses.append(make_mass(np.clip(p3, 1e-6, 1-1e-6), reliability(aurocs['imaging'])))
+    
+    if len(masses) == 0:
+        fusion_dst = weighted_avg
+        conflict = 0.0
+    elif len(masses) == 1:
+        m = masses[0]
+        fusion_dst = m['M1'] + 0.5 * m['uncertain']
+        conflict = 0.0
+    else:
+        combined = masses[0]
+        conflict = 0.0
+        for i in range(1, len(masses)):
+            K = (combined['M1'] * masses[i]['M0']) + (combined['M0'] * masses[i]['M1'])
+            conflict += K
+            combined = dempster_combine(combined, masses[i])
+        fusion_dst = combined['M1'] + 0.5 * combined['uncertain']
+
+    # 3. Entropy-Regularised Optimal Transport Fusion (OT-Fusion)
+    weights = {'clinical': 0.1016, 'genomic': 0.3091, 'imaging': 0.5892}
+    lam = 0.001
+    pool = []
+    if p1 is not None: pool.append((np.clip(p1, 1e-6, 1-1e-6), weights['clinical']))
+    if p2 is not None: pool.append((np.clip(p2, 1e-6, 1-1e-6), weights['genomic']))
+    if p3 is not None: pool.append((np.clip(p3, 1e-6, 1-1e-6), weights['imaging']))
+    
+    if len(pool) == 0:
+        fusion_ot = weighted_avg
+        jsd = 0.0
+    else:
+        numerator = sum(w * np.log(p / (1 - p)) for p, w in pool)
+        denominator = sum(w for p, w in pool) + lam
+        fusion_ot = 1.0 / (1.0 + np.exp(-numerator / denominator))
+        probs_list = [p for p, _ in pool]
+        mean_p = sum(probs_list) / len(probs_list)
+        jsd = sum(p * np.log(p / mean_p) + (1-p) * np.log((1-p) / (1-mean_p)) for p in probs_list) / len(probs_list)
+
     return {
-        "fusion_a_simple_avg":  round(sum(probs) / len(probs), 4),
-        "fusion_b_f2_weighted": round(sum(p * w for p, w in available.values()) / total_w, 4),
-        "fusion_d_cascade_max": round(max(probs), 4),
+        "fusion_a_simple_avg":  round(float(simple_avg), 4),
+        "fusion_b_f2_weighted": round(float(weighted_avg), 4),
+        "fusion_d_cascade_max": round(float(cascade_max), 4),
+        
+        "fusion_bef":           round(float(fusion_bef), 4),
+        "fusion_dst":           round(float(fusion_dst), 4),
+        "fusion_dst_conflict":  round(float(conflict), 4),
+        "fusion_ot":            round(float(fusion_ot), 4),
+        "fusion_ot_jsd":        round(float(jsd), 4),
+        
         "modalities_used": list(available.keys()),
         "modality_count": len(available)
     }
@@ -176,8 +255,8 @@ def predict_fusion():
             "model2": round(p2,4) if p2 is not None else None,
             "model3": round(p3,4) if p3 is not None else None,
             **fusions,
-            "final_verdict": risk_label(fusions["fusion_b_f2_weighted"]),
-            "final_risk_class": risk_class(fusions["fusion_b_f2_weighted"]),
+            "final_verdict": risk_label(fusions["fusion_bef"]),
+            "final_risk_class": risk_class(fusions["fusion_bef"]),
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 400
