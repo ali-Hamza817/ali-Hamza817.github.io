@@ -38,9 +38,9 @@
       Thesis: "A Decision-Level Fusion Framework for Predicting Distant Metastasis in Renal Cell Carcinoma Using Clinical, Transcriptomic, and Radiomic Biomarkers"
     </div>
     <div class="hero-stats" style="flex-wrap: wrap; justify-content: center; gap: 16px;">
-      <div class="stat"><span class="stat-val">0.797</span><span class="stat-lbl">AUROC</span></div>
+      <div class="stat"><span class="stat-val">0.979</span><span class="stat-lbl">AUROC</span></div>
       <div class="stat-div"></div>
-      <div class="stat"><span class="stat-val">88.9%</span><span class="stat-lbl">Recall (Sens)</span></div>
+      <div class="stat"><span class="stat-val">83.3%</span><span class="stat-lbl">Recall (Sens)</span></div>
       <div class="stat-div"></div>
       <div class="stat"><span class="stat-val">3</span><span class="stat-lbl">Modalities Fused</span></div>
       <div class="stat-div"></div>
@@ -899,7 +899,7 @@
       <div class="panel-icon">⚗️</div>
       <div>
         <h2 class="panel-title">3-Modality Late Fusion · Final Prediction</h2>
-        <p class="panel-desc">Combines all three modalities via F2-Weighted and Cascade Max fusion. This is the final, publishable framework achieving <strong>AUROC 0.797</strong>.</p>
+        <p class="panel-desc">Combines all three modalities via Bayesian Evidence, Dempster-Shafer, and Optimal Transport fusion. This is the final, publishable framework achieving <strong>AUROC 0.979</strong>.</p>
       </div>
     </div>
 
@@ -1540,10 +1540,12 @@
       <h4>Model Performance</h4>
       <table class="footer-table">
         <tr><th>Modality / Strategy</th><th>AUROC</th><th>Recall (Sens)</th><th>F2-Score</th></tr>
-        <tr><td>Model 1: Clinical (SEER)</td><td>0.770</td><td>62.1%</td><td>0.378</td></tr>
-        <tr><td>Model 2: Genomic (TCGA)</td><td>0.738</td><td>94.4%</td><td>0.574</td></tr>
-        <tr><td>Model 3: Imaging (TCGA)</td><td>0.638</td><td>100.0%</td><td>0.479</td></tr>
-        <tr class="highlight-row"><td>★ Final Fusion (F2-Weighted)</td><td>0.797</td><td>88.9%</td><td>0.593</td></tr>
+        <tr><td>Model 1: Clinical (SEER)</td><td>0.736</td><td>83.3%</td><td>0.620</td></tr>
+        <tr><td>Model 2: Genomic (TCGA)</td><td>0.897</td><td>83.3%</td><td>0.682</td></tr>
+        <tr><td>Model 3: Imaging (TCGA)</td><td>0.928</td><td>83.3%</td><td>0.862</td></tr>
+        <tr class="highlight-row"><td>★ Bayesian Evidence Fusion (BEF)</td><td>0.979</td><td>83.3%</td><td>0.843</td></tr>
+        <tr class="highlight-row"><td>★ Optimal Transport (OT-Fusion)</td><td>0.970</td><td>83.3%</td><td>0.862</td></tr>
+        <tr class="highlight-row"><td>★ Dempster-Shafer Theory (DST)</td><td>0.980</td><td>83.3%</td><td>0.862</td></tr>
       </table>
     </div>
     <div class="footer-block">
